@@ -1,21 +1,25 @@
-package utils
+package services
 
 import (
-	"fmt"
 	"log"
 	"time"
+
+	"github.com/jassi-singh/mini-forge/internal/repository"
+	"github.com/jassi-singh/mini-forge/internal/utils"
 )
 
 type KeyPool struct {
-	pool    chan string
-	minSize int
+	rangeCounterRepo repository.RangeCounterRepository
+	pool             chan string
+	minSize          int
 }
 
-func NewKeyPool(size int) *KeyPool {
+func NewKeyPool(size int, rangeCounterRepo repository.RangeCounterRepository) *KeyPool {
 	log.Printf("Initializing KeyPool with size %d", size)
 	keyPool := &KeyPool{
-		pool:    make(chan string, size*2),
-		minSize: size / 10,
+		rangeCounterRepo: rangeCounterRepo,
+		pool:             make(chan string, size*2),
+		minSize:          size / 10,
 	}
 
 	go keyPool.refiller()
@@ -58,9 +62,13 @@ func (kp *KeyPool) fetchKeysFromDB() ([]string, error) {
 
 	keys := []string{}
 
-	for i := range 100 {
-		var key string
-		key = "key_" + time.Now().Format("150405.000000000") + "_" + fmt.Sprint(i)
+	counter, err := kp.rangeCounterRepo.GetAndIncrement()
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range counter {
+		key := utils.GenerateBase62Key(i)
 		keys = append(keys, key)
 	}
 

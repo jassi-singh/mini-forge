@@ -9,7 +9,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jassi-singh/mini-forge/internal/api_handlers"
 	"github.com/jassi-singh/mini-forge/internal/database"
-	"github.com/jassi-singh/mini-forge/internal/keypool"
+	"github.com/jassi-singh/mini-forge/internal/repository"
+	"github.com/jassi-singh/mini-forge/internal/services"
+	"github.com/jassi-singh/mini-forge/internal/utils"
 )
 
 func main() {
@@ -21,10 +23,12 @@ func main() {
 	}
 	database.Migrate(db)
 
+	rangeCounterRepo := repository.NewRangeCounterRepository(*db)
+
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	keyPool := utils.NewKeyPool(100)
+	keyPool := services.NewKeyPool(utils.RANGE_SIZE, rangeCounterRepo)
 
 	apiHandler := api_handlers.NewApiHandler(keyPool)
 

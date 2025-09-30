@@ -4,14 +4,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jassi-singh/mini-forge/internal/keypool"
+	"github.com/jassi-singh/mini-forge/internal/services"
 )
 
 type ApiHandler struct {
-	keyPool *utils.KeyPool
+	keyPool *services.KeyPool
 }
 
-func NewApiHandler(keyPool *utils.KeyPool) *ApiHandler {
+func NewApiHandler(keyPool *services.KeyPool) *ApiHandler {
 	return &ApiHandler{keyPool: keyPool}
 }
 
