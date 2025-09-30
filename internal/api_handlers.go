@@ -1,18 +1,23 @@
 package internal
 
 import (
-	"database/sql"
+	"log"
 	"net/http"
 )
 
 type ApiHandler struct {
-	db    *sql.DB
-	cache CacheStore
+	keyPool *KeyPool
 }
 
-func NewApiHandler(db *sql.DB, cache CacheStore) *ApiHandler {
-	return &ApiHandler{db: db, cache: cache}
+func NewApiHandler(keyPool *KeyPool) *ApiHandler {
+	return &ApiHandler{keyPool: keyPool}
 }
 
 func (h *ApiHandler) GetKey(w http.ResponseWriter, r *http.Request) {
+	log.Println("Received request for /get-key")
+	key := h.keyPool.Get()
+	log.Printf("Provided key: %s", key)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(key))
 }

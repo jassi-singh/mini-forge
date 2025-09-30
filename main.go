@@ -25,7 +25,9 @@ func main() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	apiHandler := internal.NewApiHandler(db, internal.NewInMemoryCache())
+	keyPool := internal.NewKeyPool(db, 100)
+
+	apiHandler := internal.NewApiHandler(keyPool)
 
 	router.Get("/get-key", apiHandler.GetKey)
 
