@@ -43,7 +43,7 @@ func (kp *KeyPool) refiller() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		for len(kp.pool) < kp.minSize {
+		if len(kp.pool) <= kp.minSize {
 			keys, err := kp.fetchKeysFromDB()
 			if err != nil {
 				log.Printf("Error fetching key from DB: %v", err)
@@ -62,12 +62,12 @@ func (kp *KeyPool) fetchKeysFromDB() ([]string, error) {
 
 	keys := []string{}
 
-	counter, err := kp.rangeCounterRepo.GetAndIncrement()
+	lastUsed, err := kp.rangeCounterRepo.GetAndIncrement()
 	if err != nil {
 		return nil, err
 	}
 
-	for i := range counter {
+	for i := lastUsed; i < lastUsed+int64(utils.RANGE_SIZE); i++ {
 		key := utils.GenerateBase62Key(i)
 		keys = append(keys, key)
 	}

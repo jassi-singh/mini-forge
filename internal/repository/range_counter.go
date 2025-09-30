@@ -28,7 +28,7 @@ func (r *rangeCounterRepo) GetAndIncrement() (int64, error) {
 			return err
 		}
 
-		counter = rangeCounter.LastUsed + 1
+		counter = rangeCounter.LastUsed
 		rangeCounter.LastUsed += int64(utils.RANGE_SIZE)
 
 		if err := tx.Save(&rangeCounter).Error; err != nil {
