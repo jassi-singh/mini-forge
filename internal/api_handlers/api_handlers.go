@@ -1,15 +1,17 @@
-package internal
+package api_handlers
 
 import (
 	"log"
 	"net/http"
+
+	"github.com/jassi-singh/mini-forge/internal/keypool"
 )
 
 type ApiHandler struct {
-	keyPool *KeyPool
+	keyPool *utils.KeyPool
 }
 
-func NewApiHandler(keyPool *KeyPool) *ApiHandler {
+func NewApiHandler(keyPool *utils.KeyPool) *ApiHandler {
 	return &ApiHandler{keyPool: keyPool}
 }
 

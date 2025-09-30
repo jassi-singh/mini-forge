@@ -8,7 +8,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jassi-singh/mini-forge/internal"
+	"github.com/jassi-singh/mini-forge/internal/api_handlers"
+	"github.com/jassi-singh/mini-forge/internal/keypool"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -25,9 +26,9 @@ func main() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	keyPool := internal.NewKeyPool(db, 100)
+	keyPool := utils.NewKeyPool(db, 100)
 
-	apiHandler := internal.NewApiHandler(keyPool)
+	apiHandler := api_handlers.NewApiHandler(keyPool)
 
 	router.Get("/get-key", apiHandler.GetKey)
 
