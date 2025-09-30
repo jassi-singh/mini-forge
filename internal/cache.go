@@ -1,5 +1,7 @@
 package internal
 
+import "sync"
+
 type CacheStore interface {
 	Get(key string) (string, bool)
 	Set(key string, value string)
@@ -7,24 +9,24 @@ type CacheStore interface {
 }
 
 type InMemoryCache struct {
-	store map[string]string
+	store sync.Map
 }
 
 func NewInMemoryCache() *InMemoryCache {
-	return &InMemoryCache{
-		store: make(map[string]string),
-	}
+	return &InMemoryCache{}
 }
 
 func (c *InMemoryCache) Get(key string) (string, bool) {
-	value, exists := c.store[key]
-	return value, exists
+	if value, exists := c.store.Load(key); exists {
+		return value.(string), true
+	}
+	return "", false
 }
 
 func (c *InMemoryCache) Set(key string, value string) {
-	c.store[key] = value
+	c.store.Store(key, value)
 }
 
 func (c *InMemoryCache) Delete(key string) {
-	delete(c.store, key)
+	c.store.Delete(key)
 }
