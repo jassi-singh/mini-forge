@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -9,24 +8,23 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jassi-singh/mini-forge/internal/api_handlers"
+	"github.com/jassi-singh/mini-forge/internal/database"
 	"github.com/jassi-singh/mini-forge/internal/keypool"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
 	log.Print("Initializing application...")
 
-	db, err := sql.Open("sqlite3", "../app.db")
+	db, err := database.InitDB()
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
-
-	defer db.Close()
+	database.Migrate(db)
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	keyPool := utils.NewKeyPool(db, 100)
+	keyPool := utils.NewKeyPool(100)
 
 	apiHandler := api_handlers.NewApiHandler(keyPool)
 

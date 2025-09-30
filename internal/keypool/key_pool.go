@@ -1,22 +1,19 @@
 package utils
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"time"
 )
 
 type KeyPool struct {
-	db      *sql.DB
 	pool    chan string
 	minSize int
 }
 
-func NewKeyPool(db *sql.DB, size int) *KeyPool {
+func NewKeyPool(size int) *KeyPool {
 	log.Printf("Initializing KeyPool with size %d", size)
 	keyPool := &KeyPool{
-		db:      db,
 		pool:    make(chan string, size*2),
 		minSize: size / 10,
 	}
