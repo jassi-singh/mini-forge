@@ -49,7 +49,7 @@ func TestGetKey_ConcurrencyWithSyncMap(t *testing.T) {
 	server := setupTestServer()
 	defer server.Close()
 
-	numRequests := 5000
+	numRequests := 100000
 	maxConcurrentWorkers := 1000
 	var keys sync.Map
 	var failedRequests atomic.Int64
