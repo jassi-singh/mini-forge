@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -12,9 +13,16 @@ import (
 	"github.com/jassi-singh/mini-forge/internal/repository"
 	"github.com/jassi-singh/mini-forge/internal/services"
 	"github.com/jassi-singh/mini-forge/internal/utils"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	_ = godotenv.Load(".env")
+	configPath := os.Getenv("CONFIG_PATH")
+
+	if configPath == "" {
+		logger.Fatal("CONFIG_PATH environment variable is not set")
+	}
 	// Initialize logger with default settings first
 	logger.InitLogger(false)
 
@@ -26,7 +34,7 @@ func main() {
 	}
 	database.Migrate(db)
 
-	config, err := utils.LoadConfig("./config/config.yml")
+	config, err := utils.LoadConfig(configPath)
 	if err != nil {
 		logger.Fatal("Failed to load configuration: %v", err)
 	}

@@ -41,7 +41,7 @@ func (kp *KeyPool) Put(key string) {
 
 func (kp *KeyPool) refiller() {
 	logger.Debug("Starting KeyPool refiller")
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
