@@ -65,48 +65,68 @@ The service will start on the configured port (default: 8080).
 
 ## 🧪 Testing the Service
 
-### Basic Test
+### Concurrency Test
 
-Once the service is running, you can test it using `curl`:
+The service includes a comprehensive concurrency test that simulates real-world high-traffic scenarios to verify that:
+- ✅ Keys are generated correctly under heavy load
+- ✅ No duplicate keys are ever produced
+- ✅ The system handles thousands of concurrent requests safely
 
-```bash
-# Get a unique key
-curl http://localhost:8080/get-key
-```
-
-**Expected Response:**
-```
-aB3xY9
-```
-
-### Load Testing
-
-Test the service under load using multiple concurrent requests:
+#### Running the Test
 
 ```bash
-# Using ab (Apache Bench)
-ab -n 10000 -c 100 http://localhost:8080/get-key
+# Run the concurrency test
+go test -v ./internal/api_handlers/
 
-# Using curl in a loop
-for i in {1..10}; do
-  curl http://localhost:8080/get-key
-  echo ""
-done
+# Run with timeout (recommended for large tests)
+go test -v -timeout 30s ./internal/api_handlers/
 ```
 
-### Verify Uniqueness
+#### Understanding the Test Configuration
 
-Generate multiple keys and verify they are unique:
+The test is configured with two main parameters:
 
-```bash
-# Generate 100 keys and check for duplicates
-for i in {1..100}; do
-  curl -s http://localhost:8080/get-key
-  echo ""
-done | sort | uniq -d
+**1. `numRequests` (default: 5000)**
+- **What it means:** Total number of key generation requests to make
+- **Web server analogy:** Total number of HTTP requests your API will receive during a traffic spike
+- **Example:** If set to 5000, the test simulates 5000 clients requesting unique keys
+
+**2. `maxConcurrentWorkers` (default: 1000)**
+- **What it means:** Number of goroutines (workers) making requests simultaneously
+- **Web server analogy:** Maximum number of active connections your server handles at once. Even if 5000 requests come in, only 1000 are processed concurrently—similar to how web servers limit concurrent connections to manage resources
+- **Example:** With 1000 workers and 5000 requests, workers continuously pull new requests from the queue until all 5000 are complete
+
+#### Test Output
+
+After running, you'll see a summary like this:
+
+```
+=== RUN   TestGetKey_ConcurrencyWithSyncMap
+    api_handlers_test.go:101: Total requests: 5000
+    api_handlers_test.go:102: Successful requests: 5000
+    api_handlers_test.go:103: Failed requests: 0
+    api_handlers_test.go:104: Duplicate keys: 0
+--- PASS: TestGetKey_ConcurrencyWithSyncMap (2.34s)
+PASS
 ```
 
-If the output is empty, all keys are unique! 🎉
+**What each metric means:**
+- **Total requests:** How many key generation requests were attempted
+- **Successful requests:** Requests that completed successfully
+- **Failed requests:** Requests that failed (network errors, timeouts, etc.)
+- **Duplicate keys:** Number of duplicate keys found (should ALWAYS be 0)
+
+#### How It Works (Real-World Scenario)
+
+Think of it like a web API under heavy load:
+
+1. **5000 incoming requests** hit your API endpoint (`numRequests`)
+2. Your server accepts up to **1000 concurrent connections** at a time (`maxConcurrentWorkers`)
+3. All connections are processed in parallel (true concurrency)
+4. Each request receives a unique key in the response
+5. After all requests complete, we verify that no two responses contained the same key
+
+If even one duplicate is found, the test fails! This ensures your key generation service is **production-ready** and can handle real-world traffic without collisions. 🎯
 
 ## 📝 Logging
 
