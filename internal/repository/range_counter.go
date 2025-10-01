@@ -12,10 +12,10 @@ type RangeCounterRepository interface {
 }
 
 type rangeCounterRepo struct {
-	db gorm.DB
+	db *gorm.DB
 }
 
-func NewRangeCounterRepository(db gorm.DB) RangeCounterRepository {
+func NewRangeCounterRepository(db *gorm.DB) RangeCounterRepository {
 	return &rangeCounterRepo{db: db}
 }
 

@@ -23,7 +23,7 @@ func main() {
 	}
 	database.Migrate(db)
 
-	rangeCounterRepo := repository.NewRangeCounterRepository(*db)
+	rangeCounterRepo := repository.NewRangeCounterRepository(db)
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
