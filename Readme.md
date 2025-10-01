@@ -48,7 +48,7 @@ The service is configured using a config.yml file, with values populated by envi
       
     
 2.  Edit the .env file with your configuration:  
-    ```
+    ```bash
     # The port the HTTP server will listen on  
     PORT=8080  
       
@@ -68,20 +68,20 @@ The service is configured using a config.yml file, with values populated by envi
 ### Build and Run
 
 1.  Clone the repository:  
-    ```
-        git clone https://github.com/jassi-singh/mini-forge.git
-        cd mini-forge  
+    ```bash
+    git clone https://github.com/jassi-singh/mini-forge.git
+    cd mini-forge  
     ```
       
     
 2.  Install dependencies:  
-    ```
+    ```bash
     go mod download  
     ```
       
     
 3.  Run the service:  
-    ```
+    ```bash
     go run main.go  
       
     #Or build a binary and run it:  
@@ -107,7 +107,7 @@ curl http://localhost:8080/get-key
   
 
 Success Response (200 OK):
-```
+```bash
 000001a  
 ```
   
@@ -147,7 +147,7 @@ ulimit -Sn 10000
 
 #### Running the Test
 
-```
+```bash
 # Run all tests, including the concurrency test  
 go test -v ./...  
   
