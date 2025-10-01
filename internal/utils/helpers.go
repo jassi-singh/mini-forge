@@ -1,41 +1,40 @@
 package utils
 
-import "strings"
-
-func shuffle(n int64) int64 {
-	// Cast the input to uint64 to perform unsigned arithmetic.
-	x := uint64(n)
-
-	// These are the same high-quality mixing constants, now used correctly.
+func shuffle(n uint64) uint64 {
+	// These are high-quality mixing constants for bijective hash function.
+	x := n
 	x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9
 	x = (x ^ (x >> 27)) * 0x94d049bb133111eb
 	x = x ^ (x >> 31)
-
-	// Cast the final result back to int64.
-	return int64(x)
+	return x
 }
 
 // GenerateBase62Key takes a unique counter and returns a unique, non-sequential, base62-encoded key.
+// Counter must be in range [0, 62^7) = [0, 3521614606208) to guarantee uniqueness.
 func GenerateBase62Key(counter int64) string {
 	const base62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	const keyLength = 7
+	const maxValue = 3521614606208 // 62^7
 
-	shuffledCounter := shuffle(counter)
-
-	if shuffledCounter < 0 {
-		shuffledCounter = -shuffledCounter
+	if counter < 0 || counter >= maxValue {
+		panic("counter out of valid range for 7-character base62 key")
 	}
 
-	if shuffledCounter == 0 {
-		return string(base62[0])
-	}
+	// Shuffle to make keys non-sequential
+	shuffledCounter := shuffle(uint64(counter))
 
-	var sb strings.Builder
+	// Ensure it fits in 7 base62 characters by taking modulo
+	shuffledCounter = shuffledCounter % maxValue
 
-	for shuffledCounter > 0 {
+	// Build the base62 representation
+	result := make([]byte, keyLength)
+
+	// Fill from right to left (least significant digit first)
+	for i := keyLength - 1; i >= 0; i-- {
 		remainder := shuffledCounter % 62
-		sb.WriteByte(base62[remainder])
+		result[i] = base62[remainder]
 		shuffledCounter /= 62
 	}
 
-	return sb.String()
+	return string(result)
 }

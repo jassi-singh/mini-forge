@@ -207,3 +207,122 @@ go test -v -timeout 30s ./internal/api\_handlers/
   
 
 The test simulates thousands of concurrent requests and verifies that every single key received is unique. This is crucial for validating the service's reliability for production use.
+
+## 🔥 Load Testing with k6
+
+The project includes a k6 load test script to simulate realistic production traffic across multiple service instances and verify key uniqueness under high load.
+
+### Prerequisites
+
+Install k6 on your system:
+
+**macOS:**
+```bash
+brew install k6
+```
+
+**Linux:**
+```bash
+# Debian/Ubuntu
+sudo gpg -k
+sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+sudo apt-get update
+sudo apt-get install k6
+```
+
+**Windows:**
+```bash
+choco install k6
+```
+
+For other platforms, visit: https://k6.io/docs/get-started/installation/
+
+### Running Multiple Service Instances
+
+To properly test the distributed nature of mini-forge, you should run multiple instances simultaneously:
+
+**Terminal 1:**
+```bash
+PORT=8080 go run main.go
+```
+
+**Terminal 2:**
+```bash
+PORT=8081 go run main.go
+```
+
+**Terminal 3:**
+```bash
+PORT=8082 go run main.go
+```
+
+> **Note:** All instances will share the same database (configured in `config.yml`), which is essential for testing the distributed range allocation mechanism.
+
+### Running the Load Test
+
+The automated script handles both running the test and analyzing results:
+
+```bash
+chmod +x run_test_and_analyze.sh
+./run_test_and_analyze.sh
+```
+
+This script will:
+1. Execute the k6 load test against all running instances
+2. Capture all generated keys
+3. Analyze for duplicate keys
+4. Display a comprehensive summary
+
+### Load Test Configuration
+
+The k6 test (`k6_load_test.js`) uses a ramping VU (Virtual User) pattern:
+
+- **Stage 1:** Ramp up to 50 users over 30 seconds
+- **Stage 2:** Ramp up to 1,000 users over 30 seconds
+- **Stage 3:** Ramp up to 2,000 users over 30 seconds
+- **Stage 4:** Ramp down to 0 users over 30 seconds
+
+**Performance Thresholds:**
+- HTTP failure rate must be < 1%
+- 95th percentile response time must be < 200ms
+
+You can modify these settings in `k6_load_test.js` to suit your testing needs.
+
+### Understanding the Results
+
+After the test completes, you'll see output like:
+
+```
+============================================================
+          KEY UNIQUENESS TEST RESULTS
+============================================================
+
+Total Keys Generated:  458089
+Unique Keys:           458089
+Duplicate Keys Found:  0
+
+✅ SUCCESS: All keys are unique!
+
+============================================================
+
+📁 All keys saved to: results.log
+📁 Full test output saved to: test_output.log
+```
+
+**Key Metrics:**
+- **Total Keys Generated:** Total number of keys returned by all instances
+- **Unique Keys:** Number of distinct keys (should match total)
+- **Duplicate Keys Found:** Number of keys that appeared more than once (should be 0)
+
+If duplicates are found, the script will display the first 20 duplicate keys with their occurrence counts.
+
+### Manual k6 Execution
+
+You can also run k6 directly without the analysis script:
+
+```bash
+k6 run k6_load_test.js
+```
+
+This provides real-time performance metrics but doesn't perform duplicate key analysis.

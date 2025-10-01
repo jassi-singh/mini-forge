@@ -1,2 +1,5 @@
 *.db
 .env
+test_output.log
+results.log
+main
