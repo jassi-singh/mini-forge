@@ -1,6 +1,7 @@
 package services
 
 import (
+	"sync"
 	"time"
 
 	"github.com/jassi-singh/mini-forge/internal/logger"
@@ -13,6 +14,7 @@ type KeyPool struct {
 	rangeCounterRepo repository.RangeCounterRepository
 	pool             chan string
 	minSize          int
+	refillerMutex    sync.Mutex
 }
 
 func NewKeyPool(size int, rangeCounterRepo repository.RangeCounterRepository, config *utils.Config) *KeyPool {
@@ -22,6 +24,7 @@ func NewKeyPool(size int, rangeCounterRepo repository.RangeCounterRepository, co
 		rangeCounterRepo: rangeCounterRepo,
 		pool:             make(chan string, size*2),
 		minSize:          size / 10,
+		refillerMutex:    sync.Mutex{},
 	}
 
 	go keyPool.refiller()
@@ -46,14 +49,22 @@ func (kp *KeyPool) refiller() {
 
 	for range ticker.C {
 		if len(kp.pool) <= kp.minSize {
-			keys, err := kp.fetchKeysFromDB()
-			if err != nil {
-				logger.Error("Error fetching key from DB: %v", err)
-				break
-			}
+			kp.refillerMutex.Lock()
+			if len(kp.pool) <= kp.minSize {
 
-			for _, key := range keys {
-				kp.Put(key)
+				keys, err := kp.fetchKeysFromDB()
+				if err != nil {
+					logger.Error("Error fetching key from DB: %v", err)
+					kp.refillerMutex.Unlock()
+					continue
+				}
+
+				kp.refillerMutex.Unlock()
+				for _, key := range keys {
+					kp.Put(key)
+				}
+			} else {
+				kp.refillerMutex.Unlock()
 			}
 		}
 	}

@@ -1,18 +1,41 @@
 package utils
 
+import "strings"
+
+func shuffle(n int64) int64 {
+	// Cast the input to uint64 to perform unsigned arithmetic.
+	x := uint64(n)
+
+	// These are the same high-quality mixing constants, now used correctly.
+	x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9
+	x = (x ^ (x >> 27)) * 0x94d049bb133111eb
+	x = x ^ (x >> 31)
+
+	// Cast the final result back to int64.
+	return int64(x)
+}
+
+// GenerateBase62Key takes a unique counter and returns a unique, non-sequential, base62-encoded key.
 func GenerateBase62Key(counter int64) string {
 	const base62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	const keyLength = 7
 
-	// Shuffle the bits of the counter to add randomness
-	counter = ((counter >> 16) | (counter << 48)) & ((1 << 63) - 1)
+	shuffledCounter := shuffle(counter)
 
-	// Convert to base62
-	result := make([]byte, keyLength)
-	for i := keyLength - 1; i >= 0; i-- {
-		result[i] = base62[counter%62]
-		counter /= 62
+	if shuffledCounter < 0 {
+		shuffledCounter = -shuffledCounter
 	}
 
-	return string(result)
+	if shuffledCounter == 0 {
+		return string(base62[0])
+	}
+
+	var sb strings.Builder
+
+	for shuffledCounter > 0 {
+		remainder := shuffledCounter % 62
+		sb.WriteByte(base62[remainder])
+		shuffledCounter /= 62
+	}
+
+	return sb.String()
 }
