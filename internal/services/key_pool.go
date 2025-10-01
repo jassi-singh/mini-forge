@@ -1,9 +1,9 @@
 package services
 
 import (
-	"log"
 	"time"
 
+	"github.com/jassi-singh/mini-forge/internal/logger"
 	"github.com/jassi-singh/mini-forge/internal/repository"
 	"github.com/jassi-singh/mini-forge/internal/utils"
 )
@@ -16,7 +16,7 @@ type KeyPool struct {
 }
 
 func NewKeyPool(size int, rangeCounterRepo repository.RangeCounterRepository, config *utils.Config) *KeyPool {
-	log.Printf("Initializing KeyPool with size %d", size)
+	logger.Info("Initializing KeyPool with size %d", size)
 	keyPool := &KeyPool{
 		config:           config,
 		rangeCounterRepo: rangeCounterRepo,
@@ -30,17 +30,17 @@ func NewKeyPool(size int, rangeCounterRepo repository.RangeCounterRepository, co
 }
 
 func (kp *KeyPool) Get() string {
-	log.Println("Getting key from pool")
+	logger.Debug("Getting key from pool")
 	return <-kp.pool
 }
 
 func (kp *KeyPool) Put(key string) {
-	log.Printf("Putting key back to pool: %s", key)
+	logger.Debug("Putting key back to pool: %s", key)
 	kp.pool <- key
 }
 
 func (kp *KeyPool) refiller() {
-	log.Println("Starting KeyPool refiller")
+	logger.Debug("Starting KeyPool refiller")
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
@@ -48,7 +48,7 @@ func (kp *KeyPool) refiller() {
 		if len(kp.pool) <= kp.minSize {
 			keys, err := kp.fetchKeysFromDB()
 			if err != nil {
-				log.Printf("Error fetching key from DB: %v", err)
+				logger.Error("Error fetching key from DB: %v", err)
 				break
 			}
 
@@ -60,7 +60,7 @@ func (kp *KeyPool) refiller() {
 }
 
 func (kp *KeyPool) fetchKeysFromDB() ([]string, error) {
-	log.Println("Fetching keys from DB")
+	logger.Debug("Fetching keys from DB")
 
 	keys := []string{}
 
@@ -74,6 +74,6 @@ func (kp *KeyPool) fetchKeysFromDB() ([]string, error) {
 		keys = append(keys, key)
 	}
 
-	log.Printf("Fetched %d keys from DB", len(keys))
+	logger.Debug("Fetched %d keys from DB", len(keys))
 	return keys, nil
 }

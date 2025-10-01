@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
@@ -9,24 +8,32 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jassi-singh/mini-forge/internal/api_handlers"
 	"github.com/jassi-singh/mini-forge/internal/database"
+	"github.com/jassi-singh/mini-forge/internal/logger"
 	"github.com/jassi-singh/mini-forge/internal/repository"
 	"github.com/jassi-singh/mini-forge/internal/services"
 	"github.com/jassi-singh/mini-forge/internal/utils"
 )
 
 func main() {
-	log.Print("Initializing application...")
+	// Initialize logger with default settings first
+	logger.InitLogger(false)
+
+	logger.Info("Initializing application...")
 
 	db, err := database.InitDB()
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		logger.Fatal("Failed to initialize database: %v", err)
 	}
 	database.Migrate(db)
 
 	config, err := utils.LoadConfig("./config/config.yml")
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		logger.Fatal("Failed to load configuration: %v", err)
 	}
+
+	// Reinitialize logger with debug setting from config
+	logger.InitLogger(config.DebugEnabled)
+	logger.Debug("Debug logging is enabled")
 
 	rangeCounterRepo := repository.NewRangeCounterRepository(db, config)
 
@@ -42,8 +49,8 @@ func main() {
 	addr := ":" + strconv.Itoa(config.Port)
 	// Start the HTTP server
 
-	log.Println("Starting HTTP server on :", config.Port)
+	logger.Info("Starting HTTP server on :%d", config.Port)
 	if err := http.ListenAndServe(addr, router); err != nil {
-		log.Fatalf("Failed to start HTTP server: %v", err)
+		logger.Fatal("Failed to start HTTP server: %v", err)
 	}
 }

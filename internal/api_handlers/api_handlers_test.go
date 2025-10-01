@@ -55,7 +55,7 @@ func TestGetKey_ConcurrentRequests(t *testing.T) {
 	}
 	// ---------------------------------------------------
 
-	numRequests := 5000 // Let's try 5000 again
+	numRequests := 20000 // Let's try 5000 again
 	var wg sync.WaitGroup
 	wg.Add(numRequests)
 
@@ -106,4 +106,3 @@ func TestGetKey_ConcurrentRequests(t *testing.T) {
 
 	t.Logf("Successfully received %d unique keys under concurrent load.", len(receivedKeys))
 }
-

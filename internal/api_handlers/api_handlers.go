@@ -1,9 +1,9 @@
 package api_handlers
 
 import (
-	"log"
 	"net/http"
 
+	"github.com/jassi-singh/mini-forge/internal/logger"
 	"github.com/jassi-singh/mini-forge/internal/services"
 )
 
@@ -16,9 +16,9 @@ func NewApiHandler(keyPool *services.KeyPool) *ApiHandler {
 }
 
 func (h *ApiHandler) GetKey(w http.ResponseWriter, r *http.Request) {
-	log.Println("Received request for /get-key")
+	logger.Debug("Received request for /get-key")
 	key := h.keyPool.Get()
-	log.Printf("Provided key: %s", key)
+	logger.Debug("Provided key: %s", key)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(key))

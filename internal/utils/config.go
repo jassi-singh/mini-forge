@@ -12,8 +12,9 @@ import (
 // Config holds the application configuration values
 
 type Config struct {
-	Port      int `yaml:"PORT"`
-	RangeSize int `yaml:"RANGE_SIZE"`
+	Port         int  `yaml:"PORT"`
+	RangeSize    int  `yaml:"RANGE_SIZE"`
+	DebugEnabled bool `yaml:"DEBUG_ENABLED"`
 }
 
 // LoadConfig reads configuration values from config.yml
