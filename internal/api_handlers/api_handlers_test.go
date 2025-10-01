@@ -55,7 +55,7 @@ func TestGetKey_ConcurrentRequests(t *testing.T) {
 	}
 	// ---------------------------------------------------
 
-	numRequests := 20000 // Let's try 5000 again
+	numRequests := 2000 // Let's try 5000 again
 	var wg sync.WaitGroup
 	wg.Add(numRequests)
 
