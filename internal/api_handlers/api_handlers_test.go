@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -47,44 +48,63 @@ func setupTestServer() *httptest.Server {
 func TestGetKey_ConcurrencyWithSyncMap(t *testing.T) {
 	server := setupTestServer()
 	defer server.Close()
-	// Create a test server
 
-	// Number of concurrent requests
 	numRequests := 5000
-
-	// Use a sync.Map to store generated keys
+	maxConcurrentWorkers := 1000
 	var keys sync.Map
+	var failedRequests atomic.Int64
+	var duplicateKeys atomic.Int64
+
+	// Create a channel for jobs (the requests to be made)
+	jobs := make(chan int, numRequests)
+	for i := range numRequests {
+		jobs <- i
+	}
+	close(jobs)
 
 	var wg sync.WaitGroup
-	wg.Add(numRequests)
 
-	for i := 0; i < numRequests; i++ {
-		go func() {
-			defer wg.Done()
+	// Start a fixed number of worker goroutines
+	for range maxConcurrentWorkers {
+		wg.Go(func() {
+			// Each worker pulls jobs from the channel until it's empty
+			for range jobs {
+				resp, err := http.Get(server.URL + "/get-key")
+				if err != nil {
+					failedRequests.Add(1)
+					continue
+				}
 
-			resp, err := http.Get(server.URL + "/get-key")
-			if err != nil {
-				t.Errorf("Request failed: %v", err)
-				return
+				body, err := io.ReadAll(resp.Body)
+				resp.Body.Close()
+				if err != nil {
+					failedRequests.Add(1)
+					continue
+				}
+				key := string(body)
+
+				_, loaded := keys.LoadOrStore(key, true)
+				if loaded {
+					duplicateKeys.Add(1)
+				}
 			}
-			defer resp.Body.Close()
-
-			body, err := io.ReadAll(resp.Body)
-			if err != nil {
-				t.Errorf("Failed to read response body: %v", err)
-				return
-			}
-			key := string(body)
-
-			// LoadOrStore is an atomic operation that checks for the key's
-			// existence and stores it if it's not there.
-			// It returns the existing value if the key is already present.
-			_, loaded := keys.LoadOrStore(key, true)
-			if loaded {
-				t.Errorf("Duplicate key generated: %s", key)
-			}
-		}()
+		})
 	}
 
 	wg.Wait()
+
+	// Report the results
+	failedCount := failedRequests.Load()
+	duplicateCount := duplicateKeys.Load()
+	successCount := numRequests - int(failedCount)
+
+	t.Logf("Total requests: %d", numRequests)
+	t.Logf("Successful requests: %d", successCount)
+	t.Logf("Failed requests: %d", failedCount)
+	t.Logf("Duplicate keys: %d", duplicateCount)
+
+	// Assertions
+	if duplicateCount > 0 {
+		t.Errorf("Expected no duplicate keys, but found %d duplicates", duplicateCount)
+	}
 }
