@@ -116,6 +116,35 @@ Success Response (200 OK):
 
 The project includes a comprehensive concurrency test to simulate a high-traffic environment and ensure no duplicate keys are ever generated.
 
+### ⚠️ Important: System Limits for Concurrent Testing
+
+When running tests with thousands of concurrent workers, you may hit your system's file descriptor limit. This can cause "too many open files" errors.
+
+**Check your current limit:**
+```bash
+ulimit -n
+```
+
+**Temporarily increase the limit (for the current session):**
+```bash
+# Increase to 10,000 file descriptors
+ulimit -n 10000
+```
+
+**For macOS users, you may need to check both soft and hard limits:**
+```bash
+# Check soft limit
+ulimit -Sn
+
+# Check hard limit
+ulimit -Hn
+
+# Set to the hard limit or a specific value
+ulimit -Sn 10000
+```
+
+> **Note:** The required limit depends on the number of concurrent workers in your test. For very high concurrency (10,000+ workers), you may need to increase this further.
+
 #### Running the Test
 
 ```
