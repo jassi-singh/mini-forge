@@ -6,6 +6,7 @@ import (
 
 	"os"
 
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v2"
 )
 
@@ -19,6 +20,7 @@ type Config struct {
 
 // LoadConfig reads configuration values from config.yml
 func LoadConfig(path string) (*Config, error) {
+	_ = godotenv.Load()
 	configPath := os.Getenv("CONFIG_PATH")
 	fmt.Println(configPath)
 	if configPath == "" {
