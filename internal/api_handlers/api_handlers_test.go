@@ -26,8 +26,13 @@ func setupTestServer() *httptest.Server {
 
 	database.Migrate(db)
 
-	rangeCounterRepo := repository.NewRangeCounterRepository(db)
-	keyPool := services.NewKeyPool(utils.RANGE_SIZE, rangeCounterRepo)
+	config, err := utils.LoadConfig("../../config/config.yml")
+	if err != nil {
+		panic("Failed to load configuration: " + err.Error())
+	}
+	rangeCounterRepo := repository.NewRangeCounterRepository(db, config)
+
+	keyPool := services.NewKeyPool(config.RangeSize, rangeCounterRepo, config)
 	apiHandler := NewApiHandler(keyPool)
 
 	router := chi.NewRouter()
@@ -58,7 +63,7 @@ func TestGetKey_ConcurrentRequests(t *testing.T) {
 	receivedKeys := make(map[string]bool)
 
 	// 2. Act: Simulate concurrent requests
-	for i := 0; i < numRequests; i++ {
+	for range numRequests {
 		go func() {
 			defer wg.Done()
 

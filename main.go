@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,26 +23,26 @@ func main() {
 	}
 	database.Migrate(db)
 
-	rangeCounterRepo := repository.NewRangeCounterRepository(db)
+	config, err := utils.LoadConfig("./config/config.yml")
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	rangeCounterRepo := repository.NewRangeCounterRepository(db, config)
 
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
 
-	keyPool := services.NewKeyPool(utils.RANGE_SIZE, rangeCounterRepo)
+	keyPool := services.NewKeyPool(config.RangeSize, rangeCounterRepo, config)
 
 	apiHandler := api_handlers.NewApiHandler(keyPool)
 
 	router.Get("/get-key", apiHandler.GetKey)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	addr := ":" + port
+	addr := ":" + strconv.Itoa(config.Port)
 	// Start the HTTP server
 
-	log.Println("Starting HTTP server on :", port)
+	log.Println("Starting HTTP server on :", config.Port)
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatalf("Failed to start HTTP server: %v", err)
 	}

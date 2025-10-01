@@ -9,14 +9,16 @@ import (
 )
 
 type KeyPool struct {
+	config           *utils.Config
 	rangeCounterRepo repository.RangeCounterRepository
 	pool             chan string
 	minSize          int
 }
 
-func NewKeyPool(size int, rangeCounterRepo repository.RangeCounterRepository) *KeyPool {
+func NewKeyPool(size int, rangeCounterRepo repository.RangeCounterRepository, config *utils.Config) *KeyPool {
 	log.Printf("Initializing KeyPool with size %d", size)
 	keyPool := &KeyPool{
+		config:           config,
 		rangeCounterRepo: rangeCounterRepo,
 		pool:             make(chan string, size*2),
 		minSize:          size / 10,
@@ -67,7 +69,7 @@ func (kp *KeyPool) fetchKeysFromDB() ([]string, error) {
 		return nil, err
 	}
 
-	for i := lastUsed; i < lastUsed+int64(utils.RANGE_SIZE); i++ {
+	for i := lastUsed; i < lastUsed+int64(kp.config.RangeSize); i++ {
 		key := utils.GenerateBase62Key(i)
 		keys = append(keys, key)
 	}

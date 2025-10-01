@@ -12,11 +12,12 @@ type RangeCounterRepository interface {
 }
 
 type rangeCounterRepo struct {
-	db *gorm.DB
+	db     *gorm.DB
+	config *utils.Config
 }
 
-func NewRangeCounterRepository(db *gorm.DB) RangeCounterRepository {
-	return &rangeCounterRepo{db: db}
+func NewRangeCounterRepository(db *gorm.DB, config *utils.Config) RangeCounterRepository {
+	return &rangeCounterRepo{db: db, config: config}
 }
 
 func (r *rangeCounterRepo) GetAndIncrement() (int64, error) {
@@ -29,7 +30,8 @@ func (r *rangeCounterRepo) GetAndIncrement() (int64, error) {
 		}
 
 		counter = rangeCounter.LastUsed
-		rangeCounter.LastUsed += int64(utils.RANGE_SIZE)
+
+		rangeCounter.LastUsed += int64(r.config.RangeSize)
 
 		if err := tx.Save(&rangeCounter).Error; err != nil {
 			return err

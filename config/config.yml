@@ -1,0 +1,5 @@
+# Configuration file
+
+PORT: ${PORT}
+RANGE_SIZE: ${RANGE_SIZE}
+
