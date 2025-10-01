@@ -29,6 +29,56 @@ The service is designed to avoid the typical bottlenecks of a traditional KGS. I
     
 
 This architecture minimizes database interaction, making the service extremely fast and scalable.
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: redux-dark
+  layout: dagre
+---
+flowchart TD
+  subgraph Clients["Clients"]
+    A["User via API"]
+  end
+  subgraph subGraph1["Your Service"]
+    B("Load Balancer")
+    C1("mini-forge Instance 1")
+    C2("mini-forge Instance 2")
+    C3("mini-forge Instance N")
+  end
+  subgraph subGraph2["Shared Resources"]
+    D["Central Database SQLite"]
+  end
+    A --> B
+    B --> C1 & C2 & C3
+    C1 --> D
+    C2 --> D
+    C3 --> D
+```
+```mermaid
+---
+config:
+  theme: redux-dark-color
+  look: neo
+---
+sequenceDiagram
+  participant KGS_Instance as KGS Instance
+  participant Central_DB as Central Database
+  autonumber
+  loop Periodically
+    KGS_Instance ->> KGS_Instance: Check pool size
+  end
+  alt Pool size is low
+    KGS_Instance ->> Central_DB: BEGIN TRANSACTION
+    Central_DB ->> Central_DB: SELECT ... FOR UPDATE (Lock row)
+    Central_DB -->> KGS_Instance: Return last_used value
+    KGS_Instance ->> KGS_Instance: Calculate new range
+    KGS_Instance ->> Central_DB: UPDATE last_used value
+    KGS_Instance ->> Central_DB: COMMIT TRANSACTION
+    KGS_Instance ->> KGS_Instance: Generate keys for the new range
+    KGS_Instance ->> KGS_Instance: Add new keys to in-memory pool
+  end
+```
 
 ## 🚀 Getting Started
 
